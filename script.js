@@ -15,8 +15,7 @@ let selectedTiles = [];
 let foundWords = [];
 let spangramJustFound = false;
 
-// For touch tracking
-let currentTouchedTile = null;
+let isTouch = false; // Determines if the interaction is touch-based
 
 function createGrid() {
     for (let i = 0; i < gridLetters.length; i++) {
@@ -24,55 +23,55 @@ function createGrid() {
         tile.classList.add("tile");
         tile.innerHTML = `<span class="letter">${gridLetters[i]}</span>`;
         tile.dataset.index = i;
+        gridElement.appendChild(tile);
 
-        // Mouse listeners
+        // Mouse Events
         tile.addEventListener("mousedown", (e) => {
+            if (isTouch) return;
             e.preventDefault();
             handleStart(tile);
         });
 
         tile.addEventListener("mouseenter", () => {
-            if (isMouseDown) handleEnter(tile);
+            if (isMouseDown && !isTouch) {
+                handleEnter(tile);
+            }
         });
 
         tile.addEventListener("mouseup", () => {
-            if (isMouseDown) handleEnd();
-        });
-
-        // Touch listeners
-        tile.addEventListener("touchstart", (e) => {
-            e.preventDefault();
-            const target = document.elementFromPoint(
-                e.touches[0].clientX,
-                e.touches[0].clientY
-            );
-            if (target?.classList.contains("tile")) {
-                handleStart(target);
+            if (!isTouch && isMouseDown) {
+                handleEnd();
             }
         });
-
-        tile.addEventListener("touchmove", (e) => {
-            e.preventDefault();
-            const target = document.elementFromPoint(
-                e.touches[0].clientX,
-                e.touches[0].clientY
-            );
-            if (target?.classList.contains("tile")) {
-                handleEnter(target);
-            }
-        });
-
-        tile.addEventListener("touchend", () => {
-            handleEnd();
-        });
-
-        gridElement.appendChild(tile);
     }
+
+    // Touch Events on the entire grid
+    gridElement.addEventListener("touchstart", (e) => {
+        isTouch = true;
+        e.preventDefault();
+        const tile = getTileFromTouch(e);
+        if (tile) handleStart(tile);
+    });
+
+    gridElement.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+        const tile = getTileFromTouch(e);
+        if (tile) handleEnter(tile);
+    });
+
+    gridElement.addEventListener("touchend", () => {
+        if (isMouseDown) handleEnd();
+        setTimeout(() => (isTouch = false), 100); // reset after short delay
+    });
 }
 
-document.addEventListener("mouseup", () => {
-    if (isMouseDown) handleEnd();
-});
+function getTileFromTouch(e) {
+    const touch = e.touches[0];
+    const x = touch.clientX;
+    const y = touch.clientY;
+    const element = document.elementFromPoint(x, y);
+    return element?.closest(".tile");
+}
 
 function handleStart(tile) {
     if (wordPreview.textContent === "Not in word list") {
@@ -138,7 +137,6 @@ function submitSelection() {
         return;
     }
 
-    // Get 4th-to-last T index for spangram validation
     const tIndexes = [];
     for (let i = 0; i < gridLetters.length; i++) {
         if (gridLetters[i] === "T") tIndexes.push(i);
