@@ -1,0 +1,228 @@
+body {
+    font-family: system-ui, 'Segoe UI', sans-serif;
+    background-color: white;
+    margin: 40px;
+    padding: 0;
+    user-select: none;
+}
+
+#main-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 60px;
+    flex-wrap: wrap;
+}
+
+#info-panel {
+    text-align: center;
+    margin-top: 60px;
+}
+
+#theme-box {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px 20px;
+    width: 240px;
+}
+
+#theme-box h3 {
+    background-color: rgb(222, 219, 209);
+    margin: 0;
+    padding: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: #333;
+}
+
+#theme-box h2 {
+    font-size: 1.25rem;
+    margin: 10px 0;
+}
+
+#progress {
+    margin-top: 20px;
+    font-size: 1rem;
+}
+
+button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 25px;
+    border: 1px solid #aaa;
+    background-color: #f4f4f4;
+    color: #aaa;
+    cursor: not-allowed;
+}
+
+#grid-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 40px;
+}
+
+#word-preview {
+    margin-bottom: 10px;
+    margin-top: -12px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #444;
+}
+
+#grid {
+    display: grid;
+    grid-template-columns: repeat(6, 44px);
+    grid-template-rows: repeat(8, 44px);
+    gap: 6px;
+    position: relative;
+    z-index: 1;
+}
+
+.tile {
+    width: 44px;
+    height: 44px;
+    font-size: 24px;
+    font-weight: normal;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    background-color: white;
+    color: black;
+    user-select: none;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+}
+
+.tile.preview {
+    background-color: rgb(222, 219, 209);
+    color: black;
+}
+
+.tile.selected-theme {
+    background-color: rgb(174, 223, 238);
+    color: black;
+}
+
+.tile.selected-spangram {
+    background-color: rgb(248, 205, 3);
+    color: black;
+}
+
+#line-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.line-path {
+    stroke: rgb(222, 219, 209);
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    opacity: 1;
+    transition: all 0.2s ease;
+}
+
+.line-path.correct {
+    stroke: rgb(174, 223, 238);
+}
+
+.line-path.spangram {
+    stroke: rgb(248, 205, 3);
+}
+
+@keyframes grow-in {
+    0% {
+        transform: scale(0.4);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.tile.animating {
+    animation: grow-in 0.2s ease-out forwards;
+    z-index: 2;
+}
+
+@keyframes shake {
+    0% {
+        transform: translateX(0);
+    }
+
+    15% {
+        transform: translateX(-8px);
+    }
+
+    30% {
+        transform: translateX(8px);
+    }
+
+    45% {
+        transform: translateX(-6px);
+    }
+
+    60% {
+        transform: translateX(6px);
+    }
+
+    75% {
+        transform: translateX(-4px);
+    }
+
+    90% {
+        transform: translateX(4px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+#word-preview.shake {
+    animation: shake 0.4s ease-in-out;
+    color: #444;
+}
+
+@keyframes draw-line {
+    from {
+        stroke-dashoffset: 100%;
+    }
+
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.line-path.drawing {
+    animation: draw-line 0.5s ease-out forwards;
+}
+
+@media (max-width: 700px) {
+    #main-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+    }
+
+    #info-panel {
+        margin-top: 20px;
+    }
+
+    #word-preview {
+        font-size: 1.5rem;
+    }
+}
