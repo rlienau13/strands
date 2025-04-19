@@ -15,6 +15,9 @@ let selectedTiles = [];
 let foundWords = [];
 let spangramJustFound = false;
 
+// For touch tracking
+let currentTouchedTile = null;
+
 function createGrid() {
     for (let i = 0; i < gridLetters.length; i++) {
         const tile = document.createElement("div");
@@ -22,49 +25,45 @@ function createGrid() {
         tile.innerHTML = `<span class="letter">${gridLetters[i]}</span>`;
         tile.dataset.index = i;
 
+        // Mouse listeners
         tile.addEventListener("mousedown", (e) => {
             e.preventDefault();
-
-            if (wordPreview.textContent === "Not in word list") {
-                updatePreviewText();
-            }
-
-            if (spangramJustFound) {
-                spangramJustFound = false;
-            }
-
-            clearPreview();
-            isMouseDown = true;
-            selectedTiles = [tile];
-            tile.classList.add("preview");
-            updatePreviewText();
-            drawLinePath();
+            handleStart(tile);
         });
 
         tile.addEventListener("mouseenter", () => {
-            if (!isMouseDown) return;
-
-            const lastTile = selectedTiles[selectedTiles.length - 1];
-            const secondLastTile = selectedTiles[selectedTiles.length - 2];
-
-            if (tile === secondLastTile) {
-                const removed = selectedTiles.pop();
-                removed.classList.remove("preview");
-                updatePreviewText();
-                drawLinePath();
-                return;
-            }
-
-            if (!selectedTiles.includes(tile) && isAdjacent(tile, lastTile)) {
-                selectedTiles.push(tile);
-                tile.classList.add("preview");
-                updatePreviewText();
-                drawLinePath();
-            }
+            if (isMouseDown) handleEnter(tile);
         });
 
         tile.addEventListener("mouseup", () => {
-            if (isMouseDown) submitSelection();
+            if (isMouseDown) handleEnd();
+        });
+
+        // Touch listeners
+        tile.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            const target = document.elementFromPoint(
+                e.touches[0].clientX,
+                e.touches[0].clientY
+            );
+            if (target?.classList.contains("tile")) {
+                handleStart(target);
+            }
+        });
+
+        tile.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+            const target = document.elementFromPoint(
+                e.touches[0].clientX,
+                e.touches[0].clientY
+            );
+            if (target?.classList.contains("tile")) {
+                handleEnter(target);
+            }
+        });
+
+        tile.addEventListener("touchend", () => {
+            handleEnd();
         });
 
         gridElement.appendChild(tile);
@@ -72,9 +71,50 @@ function createGrid() {
 }
 
 document.addEventListener("mouseup", () => {
-    if (isMouseDown) submitSelection();
-    isMouseDown = false;
+    if (isMouseDown) handleEnd();
 });
+
+function handleStart(tile) {
+    if (wordPreview.textContent === "Not in word list") {
+        updatePreviewText();
+    }
+
+    if (spangramJustFound) {
+        spangramJustFound = false;
+    }
+
+    clearPreview();
+    isMouseDown = true;
+    selectedTiles = [tile];
+    tile.classList.add("preview");
+    updatePreviewText();
+    drawLinePath();
+}
+
+function handleEnter(tile) {
+    const lastTile = selectedTiles[selectedTiles.length - 1];
+    const secondLastTile = selectedTiles[selectedTiles.length - 2];
+
+    if (tile === secondLastTile) {
+        const removed = selectedTiles.pop();
+        removed.classList.remove("preview");
+        updatePreviewText();
+        drawLinePath();
+        return;
+    }
+
+    if (!selectedTiles.includes(tile) && isAdjacent(tile, lastTile)) {
+        selectedTiles.push(tile);
+        tile.classList.add("preview");
+        updatePreviewText();
+        drawLinePath();
+    }
+}
+
+function handleEnd() {
+    isMouseDown = false;
+    submitSelection();
+}
 
 function updatePreviewText() {
     if (spangramJustFound || wordPreview.textContent === "Not in word list") return;
@@ -90,7 +130,6 @@ function clearPreview() {
 }
 
 function submitSelection() {
-    isMouseDown = false;
     const word = selectedTiles.map(tile => tile.textContent).join("").toUpperCase();
 
     if (foundWords.includes(word)) {
@@ -99,13 +138,11 @@ function submitSelection() {
         return;
     }
 
+    // Get 4th-to-last T index for spangram validation
     const tIndexes = [];
     for (let i = 0; i < gridLetters.length; i++) {
-        if (gridLetters[i] === "T") {
-            tIndexes.push(i);
-        }
+        if (gridLetters[i] === "T") tIndexes.push(i);
     }
-
     const requiredTIndex = tIndexes[tIndexes.length - 4];
     const lastTileIndex = parseInt(selectedTiles[selectedTiles.length - 1].dataset.index);
 
@@ -187,13 +224,13 @@ function drawLinePath(temp = true, isSpangram = false, isCorrectWord = false) {
             path.style.strokeDasharray = length;
             path.style.strokeDashoffset = length;
 
-            const duration = 0.08 * selectedTiles.length;
+            const duration = 0.1 * selectedTiles.length;
             path.style.transition = `stroke-dashoffset ${duration}s ease-out`;
 
             lineLayer.appendChild(path);
             void path.getBoundingClientRect();
             path.style.strokeDashoffset = 0;
-        }, 40);
+        }, 100);
     }
 }
 
@@ -221,9 +258,9 @@ function revealTilesSequentially(className, isSpangram = false) {
             setTimeout(() => {
                 tile.classList.remove("animating");
                 tile.classList.add(className);
-            }, 250);
+            }, 150);
         }, delay);
-        delay += 40;
+        delay += 60;
     });
 
     setTimeout(() => {
